@@ -40,20 +40,76 @@ let s:cterm0B = "02"
 let s:cterm0C = "06"
 let s:cterm0D = "04"
 let s:cterm0E = "05"
-if exists('base16colorspace') && base16colorspace == "256"
-  let s:cterm01 = "18"
-  let s:cterm02 = "19"
-  let s:cterm04 = "20"
-  let s:cterm06 = "21"
-  let s:cterm09 = "16"
-  let s:cterm0F = "17"
+
+if &t_Co == 256
+    if exists('base16colorspace') && base16colorspace == "256"
+        let s:cterm01 = "18"
+        let s:cterm02 = "19"
+        let s:cterm04 = "20"
+        let s:cterm06 = "21"
+        let s:cterm09 = "16"
+        let s:cterm0F = "17"
+    else
+        function <SID>closestIndex(color, base, jump, step, range)
+            let l:min   = 255
+            let l:value = a:base
+
+            for i in range(a:range)
+                let l:distance = abs(a:color - l:value)
+
+                if l:min < l:distance
+                    break
+                endif
+
+                let l:min   = l:distance
+                let l:value = l:value + (l:i ? a:step : a:jump)
+            endfor
+
+            return (l:i - 1)
+        endfunction
+
+        function <SID>colorIndex(color)
+            return s:closestIndex(a:color, 0, 95, 40, 6)
+        endfunction
+
+        function <SID>grayIndex(color)
+            return s:closestIndex(a:color, 8, 10, 10, 24) + 232
+        endfunction
+
+        function <SID>paletteIndex(hex)
+            let l:r = str2nr(strpart(a:hex, 0, 2), 16)
+            let l:g = str2nr(strpart(a:hex, 2, 2), 16)
+            let l:b = str2nr(strpart(a:hex, 4, 2), 16)
+
+            let l:distance = (abs(l:r - l:g) + abs(l:r - l:b) + abs(l:g - l:b)) / 3.0
+
+            if l:distance < 10
+                let l:avg = (l:r + l:g + l:b) / 3.0
+                let l:index = s:grayIndex(l:avg)
+            else
+                let l:ri = s:colorIndex(l:r)
+                let l:gi = s:colorIndex(l:g)
+                let l:bi = s:colorIndex(l:b)
+                let l:index = (16 + (36 * l:ri) + (6 * l:gi) + l:bi)
+            endif
+
+            return string(l:index)
+        endfunction
+
+        let s:cterm01 = s:paletteIndex(s:gui01)
+        let s:cterm02 = s:paletteIndex(s:gui02)
+        let s:cterm04 = s:paletteIndex(s:gui04)
+        let s:cterm06 = s:paletteIndex(s:gui06)
+        let s:cterm09 = s:paletteIndex(s:gui09)
+        let s:cterm0F = s:paletteIndex(s:gui0F)
+    endif
 else
-  let s:cterm01 = "10"
-  let s:cterm02 = "11"
-  let s:cterm04 = "12"
-  let s:cterm06 = "13"
-  let s:cterm09 = "09"
-  let s:cterm0F = "14"
+    let s:cterm01 = "00"
+    let s:cterm02 = "08"
+    let s:cterm04 = "07"
+    let s:cterm06 = "15"
+    let s:cterm09 = "09"
+    let s:cterm0F = "01"
 endif
 
 " Theme setup
@@ -194,11 +250,11 @@ call <sid>hi("Keyword",      s:gui0E, "", s:cterm0E, "", "")
 call <sid>hi("Label",        s:gui0A, "", s:cterm0A, "", "")
 call <sid>hi("Number",       s:gui09, "", s:cterm09, "", "")
 call <sid>hi("Operator",     s:gui05, "", s:cterm05, "", "none")
-call <sid>hi("PreProc",      s:gui08, "", s:cterm0A, "", "")
+call <sid>hi("PreProc",      s:gui08, "", s:cterm08, "", "")
 call <sid>hi("Repeat",       s:gui0A, "", s:cterm0A, "", "")
-call <sid>hi("Special",      s:gui0A, "", s:cterm0C, "", "")
+call <sid>hi("Special",      s:gui0A, "", s:cterm0A, "", "")
 call <sid>hi("SpecialChar",  s:gui0F, "", s:cterm0F, "", "")
-call <sid>hi("Statement",    s:gui0E, "", s:cterm08, "", "")
+call <sid>hi("Statement",    s:gui0E, "", s:cterm0E, "", "")
 call <sid>hi("StorageClass", s:gui0A, "", s:cterm0A, "", "")
 call <sid>hi("String",       s:gui0B, "", s:cterm0B, "", "")
 call <sid>hi("Structure",    s:gui0E, "", s:cterm0E, "", "")
@@ -226,7 +282,7 @@ call <sid>hi("DiffRemoved",  s:gui08, s:gui00, s:cterm08, s:cterm00, "")
 
 " Vim highlighting
 call <sid>hi("vimFunction",  s:gui0D, "", s:cterm0D, "", "")
-call <sid>hi("vimIsCommand", s:gui0C, "", s:cterm0D, "", "")
+call <sid>hi("vimIsCommand", s:gui0C, "", s:cterm0C, "", "")
 
 " Ruby highlighting
 call <sid>hi("rubyAttribute",               s:gui0D, "", s:cterm0D, "", "")
